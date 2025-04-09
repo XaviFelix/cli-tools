@@ -1,0 +1,23 @@
+#NOTE: keep this in mind:
+Systemd: If the device is mounted by systemd, you can use systemd's capabilities to access the mount point.
+
+1✅) Using the DEVICE_PATH will give me the block device
+example: /dev/sda1 (or whatever)
+
+I need to append that to the end of this command:
+
+udisksctl mount -b DEVICE_PATH
+
+2) Outstanding, i have the device mounted by now!
+
+Next I need get to this path found at:
+
+/run/media/$USER/$LABEL and create an ENV var for it
+
+3) Once i have access to that path, i can back things up here.
+Before i do that, make sure i can reach that path in step 2
+
+Basically i want to use this command when copying:
+
+#NOTE: This works for the current directory only
+cp -r * PATH_TO_FLASHDRIVE
