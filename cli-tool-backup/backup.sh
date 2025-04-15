@@ -1,13 +1,9 @@
 #!/bin/bash
 
-# TODO: If dev label is already mounted then ignore mount_label call
-#
-# TODO: Pass an argument to this command that lets you back up a specific resource
-#       NOTE: Look into using variable length args for arbritrary args by user
+#NOTE:: If the device is mounted and the commadn is ran
+#       TODO: First check if the device is mounted, if it is then don't mount it
+#             and continue with the copy command
 
-#TODO: Add a prompt asking user if they're sure they want to proceed with backup
-
-#TODO: unmount after backing up
 function unmount_label() {
   if [[ -n "$DEVICE_PATH" ]]; then
     echo "Unmounting $DEVICE_PATH..."
@@ -28,15 +24,103 @@ function mount_label() {
   fi
 }
 
+#NOTE: This isn't being used. Save just in case
+function interactive_prompt() {
+  # Prompt
+  isRunning=1
+  while [ "$isRunning" -eq 1 ]; do
+    echo -e "\n Where would you like to save your data?"
+    echo "Press . for the current directory"
+    echo "Or type the path of the desired destination"
+    ls -la
+    local user_input
+    read user_input
+
+    case $user_input in
+    .)
+      cp -r * "$LABEL_PATH"
+      ;;
+    # Need one for all the paths
+    e)
+      exit 1
+      ;;
+    *)
+      echo "Invalid path, try again or press e to exit."
+      ;;
+    esac
+  done
+
+}
+
+function list_dir() {
+  echo
+  ls -la "$1"
+  echo -e "\nWhere would you like to save your data?"
+}
+
+function display_menu() {
+  echo -e "\n1) Current directory"
+  echo "2) Choose a directory"
+  echo "3) Exit program"
+}
+
+function select_user_option() {
+  local LABEL_PATH="$1"
+
+  #TODO: Test if relative paths work
+  local options=("Current directory" "Change directory" "Exit program")
+  local DIR_PATH="$LABEL_PATH"
+  list_dir "$DIR_PATH"
+
+  select choice in "${options[@]}"; do
+
+    # TODO: Make sure the path is a valid path
+    case "$choice" in
+    "Current directory")
+      echo "Backing up all resources in $PWD"
+      cp -r * "$DIR_PATH"
+      echo "Copying resources to $LABEL..."
+      echo "Finished copying resources to $LABEL device"
+      break
+      ;;
+
+    "Change directory")
+      local user_input
+      read user_input
+      DIR_PATH="${DIR_PATH}/${user_input}"
+      if [[ -d "$DIR_PATH" ]]; then
+        clear
+        list_dir "$DIR_PATH"
+      else
+        echo "Path/directory does not exist"
+        exit 1
+      fi
+
+      echo "You are here: $DIR_PATH"
+      display_menu
+      ;;
+
+    "Exit program")
+      #TODO: Make this better
+      echo "Exiting program..."
+      exit 1
+      ;;
+
+    *)
+      echo "Invalid choice or path, please try again or press q to exit"
+      ;;
+
+    esac
+  done
+}
+
 #TODO: Test this
-function backup_currentdir() {
+function backup_protocol() {
   local LABEL_PATH="/run/media/$USER/$LABEL"
 
-  if [[ -e "$LABEL_PATH" ]]; then
-    # echo "The path exist: $LABEL_PATH"
-    cp -r * "$LABEL_PATH"
-    echo "Copying resources to $LABEL..."
-    echo "Finished copying resources to $LABEL"
+  #NOTE: was -e in case it don't work with -d
+  if [[ -d "$LABEL_PATH" ]]; then
+    select_user_option "$LABEL_PATH"
   else
     echo "The path $LABEL_PATH does not exist"
   fi
@@ -52,6 +136,10 @@ fi
 
 # Name of flashdrive
 LABEL="$1"
+# TODO: Get the args here (should include the list of directories or files i want to back up)
+# TODO: If arg is '.' then that means the entire directory gets backed up.
+#       else if its just a list of argumetns, then hold those in a list so that i can copy
+#       each individually to their destination
 
 # Find device path
 DEVICE_PATH=$(lsblk -o LABEL,PATH | grep "^$LABEL" | awk '{print $2}')
@@ -60,7 +148,8 @@ DEVICE_PATH=$(lsblk -o LABEL,PATH | grep "^$LABEL" | awk '{print $2}')
 if [[ -e "$DEVICE_PATH" ]]; then
   echo "$DEVICE_PATH is a valid block device"
   mount_label
-  backup_currentdir
+  backup_protocol
+  unmount_label
 else
   echo "$LABEL Not found"
   exit 1
