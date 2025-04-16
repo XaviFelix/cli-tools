@@ -1,5 +1,7 @@
 #!/bin/bash
 
+#TODO: new option: back up one directory
+
 #NOTE:: If the device is mounted and the commadn is ran
 #       TODO: First check if the device is mounted, if it is then don't mount it
 #             and continue with the copy command
@@ -34,7 +36,7 @@ function interactive_prompt() {
     echo "Or type the path of the desired destination"
     ls -la
     local user_input
-    read user_input
+    read -e user_input
 
     case $user_input in
     .)
@@ -58,17 +60,29 @@ function list_dir() {
   echo -e "\nWhere would you like to save your data?"
 }
 
+# TODO: Not working, create a small script diong this behavior to get a better understanding
+function make_dir() {
+  local dir_name
+  echo -n "directory name: "
+  read -e dir_name
+  mkdir "${1}/${dir_name}"
+  list_dir "$1"
+}
+
 function display_menu() {
-  echo -e "\n1) Current directory"
-  echo "2) Choose a directory"
-  echo "3) Exit program"
+  echo -e "\n1) Backup here"
+  echo "2) Change directory"
+  echo "3) Previous directory"
+  echo "4) Make directory"
+  echo "5) Exit program"
 }
 
 function select_user_option() {
   local LABEL_PATH="$1"
 
   #TODO: Test if relative paths work
-  local options=("Current directory" "Change directory" "Exit program")
+  #NOTE: Relateive paths work only for the 'Change directory' option
+  local options=("Backup here" "Change directory" "Previous directory" "Make directory" "Exit program")
   local DIR_PATH="$LABEL_PATH"
   list_dir "$DIR_PATH"
 
@@ -76,26 +90,54 @@ function select_user_option() {
 
     # TODO: Make sure the path is a valid path
     case "$choice" in
-    "Current directory")
+    "Backup here")
       echo "Backing up all resources in $PWD"
-      cp -r * "$DIR_PATH"
       echo "Copying resources to $LABEL..."
+      cp -r * "$DIR_PATH"
       echo "Finished copying resources to $LABEL device"
       break
       ;;
 
     "Change directory")
+      #NOTE: backing up the dir path if given path doesn't exist
+      OLD_PATH="$DIR_PATH"
       local user_input
-      read user_input
+      read -e user_input
       DIR_PATH="${DIR_PATH}/${user_input}"
       if [[ -d "$DIR_PATH" ]]; then
         clear
         list_dir "$DIR_PATH"
       else
-        echo "Path/directory does not exist"
-        exit 1
+        clear
+        echo -e "$user_input does not exist!\n"
+        sleep 2
+        DIR_PATH="$OLD_PATH"
+        ls -la "$DIR_PATH"
+
+        #NOTE: Good try, but not what i wanted, my dumbass lmao
+        # DIR_PATH=$(dirname "$DIR_PATH")
       fi
 
+      echo "You are here: $DIR_PATH"
+      display_menu
+      ;;
+
+    #TODO: Ensure that it doesn't go past the DEVICE_PATH
+    "Previous directory")
+      DIR_PATH=$(dirname "$DIR_PATH")
+      if [[ -d "$DIR_PATH" ]]; then
+        echo
+        ls -la "$DIR_PATH"
+        echo "You are here: $DIR_PATH"
+        display_menu
+      else
+        echo ""
+      fi
+
+      ;;
+
+    "Make directory")
+      make_dir "$DIR_PATH"
       echo "You are here: $DIR_PATH"
       display_menu
       ;;
