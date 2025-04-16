@@ -1,6 +1,8 @@
 #!/bin/bash
 
-#TODO: new option: back up one directory
+#TODO: Pass args (file or dir) that will be backed up
+
+#TODO: Fix the mkdir behavior
 
 #NOTE:: If the device is mounted and the commadn is ran
 #       TODO: First check if the device is mounted, if it is then don't mount it
@@ -24,34 +26,6 @@ function mount_label() {
     echo "No device path provided and DEVICE_PATH is not set."
     exit 1
   fi
-}
-
-#NOTE: This isn't being used. Save just in case
-function interactive_prompt() {
-  # Prompt
-  isRunning=1
-  while [ "$isRunning" -eq 1 ]; do
-    echo -e "\n Where would you like to save your data?"
-    echo "Press . for the current directory"
-    echo "Or type the path of the desired destination"
-    ls -la
-    local user_input
-    read -e user_input
-
-    case $user_input in
-    .)
-      cp -r * "$LABEL_PATH"
-      ;;
-    # Need one for all the paths
-    e)
-      exit 1
-      ;;
-    *)
-      echo "Invalid path, try again or press e to exit."
-      ;;
-    esac
-  done
-
 }
 
 function list_dir() {
@@ -149,7 +123,7 @@ function select_user_option() {
       ;;
 
     *)
-      echo "Invalid choice or path, please try again or press q to exit"
+      echo "Invalid choice, please try again or press 5 to exit"
       ;;
 
     esac
