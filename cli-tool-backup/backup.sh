@@ -2,8 +2,6 @@
 
 #TODO: Pass args (file or dir) that will be backed up
 
-#TODO: Fix the mkdir behavior
-
 #NOTE:: If the device is mounted and the commadn is ran
 #       TODO: First check if the device is mounted, if it is then don't mount it
 #             and continue with the copy command
@@ -32,15 +30,6 @@ function list_dir() {
   echo
   ls -la "$1"
   echo -e "\nWhere would you like to save your data?"
-}
-
-# TODO: Not working, create a small script diong this behavior to get a better understanding
-function make_dir() {
-  local dir_name
-  echo -n "directory name: "
-  read -e dir_name
-  mkdir "${1}/${dir_name}"
-  list_dir "$1"
 }
 
 function display_menu() {
@@ -105,14 +94,30 @@ function select_user_option() {
         echo "You are here: $DIR_PATH"
         display_menu
       else
-        echo ""
+        echo "Failed to return to previous directory"
       fi
 
       ;;
 
     "Make directory")
-      make_dir "$DIR_PATH"
-      echo "You are here: $DIR_PATH"
+      local dir_name
+      read -p "Enter a directory name: " dir_name
+
+      if [[ -z "$dir_name" ]]; then
+        echo "Error: Directory name connot be empty"
+        exit 1
+      fi
+
+      if [[ "$dir_name" == /* || "$dir_name" == *../* ]]; then
+        echo "Error: Invalid directory name. Do not use absoulte paths or '../'."
+        exit 1
+      fi
+
+      mkdir -p "$DIR_PATH/$dir_name" || {
+        echo "Failed to create directory: $dir_name"
+      }
+      list_dir "$DIR_PATH"
+      echo "You are still here: $DIR_PATH"
       display_menu
       ;;
 
