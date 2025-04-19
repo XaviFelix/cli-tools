@@ -2,13 +2,6 @@
 
 #TODO: Pass args (file or dir) that will be backed up
 
-#TODO: New OPTION: checks a list of files that will be backed up
-#      Use the 'less' command for this
-
-#NOTE:: If the device is mounted and the commadn is ran
-#       TODO: First check if the device is mounted, if it is then don't mount it
-#             and continue with the copy command
-
 function unmount_label() {
   if [[ -n "$DEVICE_PATH" ]]; then
     echo "Unmounting $DEVICE_PATH..."
@@ -36,7 +29,7 @@ function list_dir() {
 }
 
 function display_menu() {
-  echo -e "\n1) Backup here"
+  echo -e "\n1) Save here"
   echo "2) Change directory"
   echo "3) Previous directory"
   echo "4) Make directory"
@@ -46,22 +39,23 @@ function display_menu() {
 
 function backup_protocol() {
   local LABEL_PATH="$1"
-
-  #TODO: Test if relative paths work
-  #NOTE: Relateive paths work only for the 'Change directory' option
-  local options=("Backup here" "Change directory" "Previous directory" "Make directory" "Preview data" "Exit program")
+  local options=("Save here" "Change directory" "Previous directory" "Make directory" "Preview data" "Exit program")
   local DIR_PATH="$LABEL_PATH"
   list_dir "$DIR_PATH"
 
   select choice in "${options[@]}"; do
 
-    # TODO: Make sure the path is a valid path
     case "$choice" in
-    "Backup here")
-      echo "Backing up all resources in $PWD"
-      echo "Copying resources to $LABEL..."
-      cp -r * "$DIR_PATH"
-      echo "Finished copying resources to $LABEL device"
+    "Save here")
+      if [[ -d "$DIR_PATH" ]]; then
+        echo "Backing up all resources in $PWD"
+        echo "Copying resources to $LABEL..."
+        cp -r * "$DIR_PATH"
+        echo "Finished copying resources to $LABEL device"
+      else
+        echo "Problem copying resources to $LABEL device"
+        exit 1
+      fi
       break
       ;;
 
@@ -80,25 +74,27 @@ function backup_protocol() {
         sleep 1
         DIR_PATH="$OLD_PATH"
         ls -la "$DIR_PATH"
-
-        #NOTE: Good try, but not what i wanted, my dumbass lmao
-        # DIR_PATH=$(dirname "$DIR_PATH")
       fi
 
       echo "You are here: $DIR_PATH"
       display_menu
       ;;
 
-    #TODO: Ensure that it doesn't go past the DEVICE_PATH
     "Previous directory")
-      DIR_PATH=$(dirname "$DIR_PATH")
-      if [[ -d "$DIR_PATH" ]]; then
+      local dir_path="$DIR_PATH"
+      dir_path=$(dirname "$dir_path")
+      if [[ -d "$dir_path" && "$dir_path" == "$LABEL_PATH"* ]]; then
+        DIR_PATH="$dir_path"
         echo
         ls -la "$DIR_PATH"
         echo "You are here: $DIR_PATH"
         display_menu
       else
-        echo "Failed to return to previous directory"
+        ls -la "$DIR_PATH"
+        echo -e "\nYou are in the device root. Must remain in $LABEL file hierarchy"
+        echo "You are here: $DIR_PATH"
+        display_menu
+
       fi
 
       ;;
@@ -130,7 +126,6 @@ function backup_protocol() {
       ;;
 
     "Exit program")
-      #TODO: Make this better
       echo "Exiting program..."
       exit 1
       ;;
@@ -143,11 +138,9 @@ function backup_protocol() {
   done
 }
 
-#TODO: Test this
 function check_label_path() {
   local LABEL_PATH="/run/media/$USER/$LABEL"
 
-  #NOTE: was -e in case it don't work with -d
   if [[ -d "$LABEL_PATH" ]]; then
     backup_protocol "$LABEL_PATH"
   else
