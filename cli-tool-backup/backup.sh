@@ -2,6 +2,9 @@
 
 #TODO: Pass args (file or dir) that will be backed up
 
+#TODO: New OPTION: checks a list of files that will be backed up
+#      Use the 'less' command for this
+
 #NOTE:: If the device is mounted and the commadn is ran
 #       TODO: First check if the device is mounted, if it is then don't mount it
 #             and continue with the copy command
@@ -37,15 +40,16 @@ function display_menu() {
   echo "2) Change directory"
   echo "3) Previous directory"
   echo "4) Make directory"
-  echo "5) Exit program"
+  echo "5) Preview data"
+  echo "6) Exit program"
 }
 
-function select_user_option() {
+function backup_protocol() {
   local LABEL_PATH="$1"
 
   #TODO: Test if relative paths work
   #NOTE: Relateive paths work only for the 'Change directory' option
-  local options=("Backup here" "Change directory" "Previous directory" "Make directory" "Exit program")
+  local options=("Backup here" "Change directory" "Previous directory" "Make directory" "Preview data" "Exit program")
   local DIR_PATH="$LABEL_PATH"
   list_dir "$DIR_PATH"
 
@@ -73,7 +77,7 @@ function select_user_option() {
       else
         clear
         echo -e "$user_input does not exist!\n"
-        sleep 2
+        sleep 1
         DIR_PATH="$OLD_PATH"
         ls -la "$DIR_PATH"
 
@@ -121,6 +125,10 @@ function select_user_option() {
       display_menu
       ;;
 
+    "Preview data")
+      ls -la "$PWD" | less
+      ;;
+
     "Exit program")
       #TODO: Make this better
       echo "Exiting program..."
@@ -136,12 +144,12 @@ function select_user_option() {
 }
 
 #TODO: Test this
-function backup_protocol() {
+function check_label_path() {
   local LABEL_PATH="/run/media/$USER/$LABEL"
 
   #NOTE: was -e in case it don't work with -d
   if [[ -d "$LABEL_PATH" ]]; then
-    select_user_option "$LABEL_PATH"
+    backup_protocol "$LABEL_PATH"
   else
     echo "The path $LABEL_PATH does not exist"
   fi
@@ -169,7 +177,7 @@ DEVICE_PATH=$(lsblk -o LABEL,PATH | grep "^$LABEL" | awk '{print $2}')
 if [[ -e "$DEVICE_PATH" ]]; then
   echo "$DEVICE_PATH is a valid block device"
   mount_label
-  backup_protocol
+  check_label_path
   unmount_label
 else
   echo "$LABEL Not found"
