@@ -2,29 +2,29 @@
 set -euo pipefail
 
 create_source_tree() {
-  local dst="$1"
+  local src="$1"
 
-  rm -rf "$dst"
+  rm -rf "$src"
 
   # create base directories
   mkdir -p \
-    "$dst"/{docs,images,bin,logs} \
-    "$dst"/images/{raw,edited}
+    "$src"/{docs,images,bin,logs} \
+    "$src"/images/{raw,edited}
 
   # seed with test files
-  echo "Hello, world!" >"$dst/docs/readme.txt"
-  echo "Log start: $(date)" >"$dst/logs/run.log"
-  dd if=/dev/zero bs=1 count=1024 >"$dst/bin/zeros.bin"
+  echo "Hello, world!" >"$src/docs/readme.txt"
+  echo "Log start: $(date)" >"$src/logs/run.log"
+  dd if=/dev/zero bs=1 count=1024 >"$src/bin/zeros.bin"
 
   # create a symlink and a hard‑link
-  ln -s docs/readme.txt "$dst/readme-link.txt"
-  ln "$dst/docs/readme.txt" "$dst/docs/readme-hardlink.txt"
+  ln -s docs/readme.txt "$src/readme-link.txt"
+  ln "$src/docs/readme.txt" "$src/docs/readme-hardlink.txt"
 
   # custom permissions
-  chmod 600 "$dst/logs/run.log"
-  touch -t 202001010101.01 "$dst/docs/readme.txt"
+  chmod 600 "$src/logs/run.log"
+  touch -t 202001010101.01 "$src/docs/readme.txt"
 
-  echo "Prepared fresh source tree at: $dst"
+  echo "Prepared fresh source tree at: $src"
 }
 
 set_up_source_tree() {
@@ -38,6 +38,7 @@ set_up_source_tree() {
   # BASEPATH=$(cat ./tests/test_path)
 
   BASEPATH=$(cat ../test_path)
+  #TODO: Change src to basepath/src so that we only copy from one tree and not multiple ones
   src="$BASEPATH/$CONCEPT/src"
   dst="$BASEPATH/$CONCEPT/dst"
 
