@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-#TODO: Update the backup script to use rsync
-
 function unmount_label() {
   if [[ -n "$DEVICE_PATH" ]]; then
     echo "Unmounting $DEVICE_PATH..."
@@ -27,7 +25,7 @@ function backup_protocol() {
 
   if [[ -d "$DIR_PATH" ]]; then
     echo -e "Copying resources to $LABEL...\n"
-    rsync -av --delete $HOME/{Documents,Downloads,Pictures,Programming,Todo} "$DIR_PATH/"
+    rsync -av --delete $HOME/{Documents,Downloads,Pictures,Programming,Todo,.zshrc,.config} "$DIR_PATH/"
     # cp -r * "$DIR_PATH"
     echo -e "\nFinished copying resources to $LABEL device"
   else
