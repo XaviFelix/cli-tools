@@ -1,10 +1,11 @@
 #!/bin/zsh
 
+#TODO: Make destination paths more robust
 xcmd() {
   if (($# > 0)); then
     local -r PATTERN="$1"
     local RESULT="$(
-      rg -lw "$PATTERN" ~/Documents/dev-commands/ |
+      rg -lw "$PATTERN" ~/dev-commands/ |
         fzf --delimiter='/' --with-nth=-1 \
           --preview 'sh -c '"'"'
             pat="$1"; file="$2"
@@ -26,6 +27,7 @@ xcmd() {
     fi
 
   else
-    ranger /home/xabi/Documents/dev-commands/
+    #NOTE: Make this robust
+    ranger ~/dev-commands/
   fi
 }
